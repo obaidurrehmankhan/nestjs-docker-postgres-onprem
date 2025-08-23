@@ -1,0 +1,84 @@
+services:
+  api:
+    # Build the dev stage of your multi-stage Dockerfile
+    build:
+      context: ./api
+      target: dev
+    container_name: onprem_api
+    # Load env vars (incl. DATABASE_URL) for the api container
+    env_file:
+      - .env
+    environment:
+      # Faster file watching on macOS inside Docker
+      CHOKIDAR_USEPOLLING: "true"
+      NODE_ENV: development
+      DATABASE_SSL: "false"
+      # NOTE: DATABASE_URL should be defined in .env like:
+      # DATABASE_URL=postgres://postgres:postgres@db:5432/appdb
+      # (host is "db" because containers share the default bridge network)
+    working_dir: /app
+    command: npm run start:dev
+    # ❌ Do NOT publish the API port externally in this stack.
+    # NGINX is the only public entrypoint (port 80). If you need direct access
+    # during dev for debugging, temporarily uncomment the "ports" below.
+    # ports:
+    #   - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Mount your source so migration files generated inside the container
+      # are written back to your host (api/src/migrations/*)
+      - ./api:/app
+      # Keep container's node_modules separate from your host to avoid OS/arch conflicts
+      - /app/node_modules
+    restart: always
+    # Optional healthcheck (requires curl or wget installed in the image).
+    # Leave commented if your dev stage doesn't have these tools.
+    # healthcheck:
+    #   test: ["CMD-SHELL", "wget -q -T 2 -O- http://localhost:3000/ready || exit 1"]
+    #   interval: 10s
+    #   timeout: 3s
+    #   retries: 10
+    #   start_period: 10s
+
+  db:
+    image: postgres:16
+    container_name: onprem_db
+    # environment:
+    #   POSTGRES_USER: postgres
+    #   POSTGRES_PASSWORD: postgres
+    #   POSTGRES_DB: appdb
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d appdb" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # (Optional for dev) expose Postgres to host so you can connect from GUI tools
+    # Remove or move to docker-compose.override.yml if you don't want it in prod
+    # ports:
+    #   - "5432:5432"
+    restart: always
+
+  nginx:
+    # 🚪 Reverse proxy — the ONLY public door
+    image: nginx:1.25-alpine
+    container_name: onprem_nginx
+    depends_on:
+      # Start after API container is up (not waiting for health, just started)
+      api:
+        condition: service_started
+    ports:
+      - "80:80" # 🌍 expose HTTP to the world
+    volumes:
+      # Mount your reverse proxy config (create at ./nginx/app.conf)
+      - ./nginx/app.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: always
+    # No env needed; it simply forwards to api:3000 over the internal network
+
+volumes:
+  pgdata:

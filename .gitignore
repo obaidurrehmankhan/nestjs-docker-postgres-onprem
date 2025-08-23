@@ -1,0 +1,14 @@
+# repo-wide ignores
+**/node_modules/
+**/dist/
+**/coverage/
+**/.DS_Store
+
+# dotenv (ignore everywhere)
+**/.env
+**/.env.*
+
+# keep templates in git
+!.env.example
+!**/.env.example
+!**/.env.*.example
