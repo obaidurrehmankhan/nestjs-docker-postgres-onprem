@@ -1,7 +1,7 @@
 // data-source.ts
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { Todo } from './src/todos/todo.entity';
+import { Todo } from './todos/todo.entity';
 import * as dotenv from 'dotenv';
 
 // Load environment variables (DATABASE_URL, etc.)

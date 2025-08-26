@@ -10,7 +10,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
-    "migrate:gen": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate src/migrations/init -d ./data-source.ts",
+    "migrate:gen": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate src/migrations/init -d ./src/data-source.ts",
     "migrate:run": "node ./node_modules/typeorm/cli.js migration:run -d dist/data-source.js",
     "migrate:revert": "node ./node_modules/typeorm/cli.js migration:revert -d dist/data-source.js",
     "start:debug": "nest start --debug --watch",
