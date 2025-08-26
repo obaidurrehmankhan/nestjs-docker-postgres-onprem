@@ -39,17 +39,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 5: Build & push image with cache
+      # Step 5: Build & push images (:sha and :latest)
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
-      # Step 6: Trivy scan (fail on HIGH/CRITICAL)
+      # Step 6: Security scan with Trivy (fail on HIGH/CRITICAL vulns)
       - name: Security scan with Trivy
         uses: aquasecurity/trivy-action@0.20.0
         with:
@@ -66,7 +68,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd /path/to/your/app
+            cd ~/onprem-app
             docker compose pull
             docker compose up -d
-            docker compose exec api npm run migrate:run
+            docker compose exec api npm run migration:run
