@@ -25,7 +25,7 @@ RUN npm ci --prefer-online --no-audit --no-fund \
 # ---------------------------------------------------------------------
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
-COPY src ./src   # 👈 includes data-source.ts now (since we moved it)
+COPY src ./src  
 
 # ---------------------------------------------------------------------
 # Step 4: Build the app (NestJS → dist/* including data-source.js).
