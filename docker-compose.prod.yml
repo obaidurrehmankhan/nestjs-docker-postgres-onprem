@@ -1,16 +1,31 @@
+# =====================================================================
+# docker-compose.prod.yml
+# Production stack for NestJS + Postgres + Nginx with TLS
+#
+# Notes:
+# - API runs from GHCR image (built via GitHub Actions).
+# - DB runs inside same Compose network (local persistent volume).
+# - Nginx is the ONLY service exposed to the internet (80/443).
+# - TLS certs are mounted from host (/etc/ssl/onprem).
+# =====================================================================
+
 services:
   api:
+    # Use prebuilt image from GitHub Container Registry
     image: ghcr.io/obaidurrehmankhan/nestjs-docker-postgres-onprem:latest
     container_name: onprem_api
+
+    # Load env vars for DB connection, etc.
     env_file:
       - .env
     environment:
       NODE_ENV: production
-      DATABASE_SSL: "true"
-    restart: always
+      DATABASE_SSL: "false"
+
     depends_on:
       db:
         condition: service_healthy
+    restart: always
 
   db:
     image: postgres:16
@@ -33,11 +48,13 @@ services:
       api:
         condition: service_started
     ports:
-      - "80:80"
-      - "443:443" # allow HTTPS
+      - "80:80" # HTTP (redirects to HTTPS)
+      - "443:443" # HTTPS
     volumes:
+      # Mount custom reverse proxy config
       - ./nginx/app.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro # mount TLS certs from host
+      # Mount self-signed certs from host (created earlier)
+      - /etc/ssl/onprem:/etc/ssl/onprem:ro
     restart: always
 
 volumes:
