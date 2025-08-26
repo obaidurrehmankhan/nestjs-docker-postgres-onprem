@@ -49,6 +49,7 @@ jobs:
           context: ./api   # Dockerfile is in api/
           file: ./api/Dockerfile
           push: true
+          no-cache: true   # 👈 force fresh rebuild, avoid old cached deps
           tags: |
             ghcr.io/obaidurrehmankhan/nestjs-docker-postgres-onprem:${{ github.sha }}
             ghcr.io/obaidurrehmankhan/nestjs-docker-postgres-onprem:latest
