@@ -76,4 +76,4 @@ jobs:
             cd ~/onprem-app
             docker compose pull
             docker compose up -d
-            docker compose exec api npm run migration:run
+            docker compose exec api npm run migrate:run
